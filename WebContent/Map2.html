@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>One</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="css/vendor.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+
+    <style>
+        
+ /* Reset default styles */
+body, h1, h2, p, div, form, input, select {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header styles */
+.header-block-search {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px;
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.fa-search {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 10px;
+    color: #333;
+}
+
+input[type="search"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Content styles */
+.content {
+    padding: 20px;
+}
+
+#map-canvas {
+    height: 600px;
+    width: 100%;
+    margin-top: 50px;
+}
+
+#location-box {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+/* Button styles */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: #fff;
+}
+
+/* Reference block styles */
+.ref {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.color-primary,
+.color-secondary {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.color-primary {
+    background-color: #007bff;
+}
+
+.color-secondary {
+    background-color: #28a745;
+}
+
+    </style>
+
+    <script>
+        function access() {
+            alert('Choose location');
+        }
+    </script>
+</head>
+
+<body onload="access()">
+    <div class="header-block header-block-search hidden-sm-down">
+        <form role="search">
+            <div class="input-container"> <i class="fa fa-search"></i> <input type="search" id="mapsearch"
+                    placeholder="Search Location">
+                <div class="underline"></div>
+            </div>
+        </form>
+    </div>
+
+    <article class="content item-editor-page">
+        <div class="title-block">
+
+            <div id="map-canvas" style="height:600px;width:1330px;margin-top:50px;margin-left:90px;"> </div>
+
+            <form action="login.jsp" method="post">
+                <input type="hidden" name="lat" id="lat" />
+                <input type="hidden" name="lng" id="lng" />
+                <center> <input type="submit" id="sendloc" value="Go" class="btn btn-success"> </center>
+            </form>
+
+            <div id="location-box">
+                <p>Selected Location:</p>
+                <p>Latitude: <span id="display-lat"></span></p>
+                <p>Longitude: <span id="display-lng"></span></p>
+            </div>
+
+            <script
+                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8DXyFQH6HR6IkcTVOIr2CxWyUSIYNAqg&libraries=places">
+            </script>
+
+            <script type="text/javascript">
+
+                var map = new google.maps.Map(document.getElementById('map-canvas'), {
+                    zoom: 15,
+                    center: new google.maps.LatLng(19.997454, 73.789803),
+                    mapTypeId: google.maps.MapTypeId.HYBRID
+                });
+
+                var infowindow = new google.maps.InfoWindow();
+
+                var marker, i, j;
+
+                var fenway = {
+                    lat: 19.997454,
+                    lng: 73.789803
+                };
+                var panorama = new google.maps.StreetViewPanorama(
+                    document.getElementById('pano'), {
+                        position: fenway,
+                        pov: {
+                            heading: 34,
+                            pitch: 10
+                        }
+                    });
+                map.setStreetView(panorama);
+
+                var searchBox = new google.maps.places.SearchBox(document.getElementById('mapsearch'));
+
+                var marker = new google.maps.Marker({
+                    position: {
+                        lat: 19.997454,
+                        lng: 73.789803
+                    },
+                    map: map,
+                    draggable: true
+                });
+
+                google.maps.event.addListener(searchBox, 'places_changed', function (c) {
+                    console.log(searchBox.getPlaces());
+                    var places = searchBox.getPlaces();
+                    var bounds = new google.maps.LatLngBounds();
+                    var i, place;
+
+                    for (i = 0; place = places[i]; i++) {
+                        bounds.extend(place.geometry.location);
+                        marker.setPosition(place.geometry.location);
+                    }
+
+                    map.fitBounds(bounds);
+                    map.setZoom(17);
+                    updateLocationInfo(marker.getPosition());
+                });
+
+                google.maps.event.addListener(map, 'click', function (c) {
+                    placeMarker(c.latLng);
+                    updateLocationInfo(c.latLng);
+                });
+
+                function placeMarker(location) {
+                    var marker = new google.maps.Marker({
+                        position: location,
+                        map: map
+                    });
+
+                    var latDisplay = document.getElementById('display-lat');
+                    var lngDisplay = document.getElementById('display-lng');
+
+                    latDisplay.textContent = location.lat();
+                    lngDisplay.textContent = location.lng();
+
+                    alert('Location set ');
+                    var x = document.getElementById('sendloc');
+                    var lat = document.getElementById('lat');
+                    lat.value = location.lat();
+                    var lng = document.getElementById('lng');
+                    lng.value = location.lng();
+
+                    x.type = "submit";
+                }
+
+                function updateLocationInfo(location) {
+                    var latDisplay = document.getElementById('display-lat');
+                    var lngDisplay = document.getElementById('display-lng');
+
+                    latDisplay.textContent = location.lat();
+                    lngDisplay.textContent = location.lng();
+                }
+            </script>
+
+            <script src="jquery.js"></script>
+
+        </div>
+        <!-- Reference block for JS -->
+        <div class="ref" id="ref">
+            <div class="color-primary"></div>
+            <div class="chart">
+                <div class="color-primary"></div>
+                <div class="color-secondary"></div>
+            </div>
+        </div>
+        <script src="js/vendor.js"></script>
+        <script src="js/app.js"></script>
+        <script src="language.js"></script>
+	<script type="text/javascript"
+		src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+	<div id="google_translate_element"></div>
+</body>
+
+</html>
